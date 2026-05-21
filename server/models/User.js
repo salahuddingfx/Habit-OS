@@ -2,57 +2,72 @@ import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
   username: {
-    type: String,
+    type:     String,
     required: true,
-    unique: true,
-    trim: true
+    unique:   true,
+    trim:     true
+  },
+  fullName: {
+    type:    String,
+    default: ''
+  },
+  email: {
+    type:    String,
+    default: '',
+    trim:    true,
+    lowercase: true
   },
   password: {
-    type: String,
+    type:     String,
     required: true
   },
+  // Secret key for password recovery (stored hashed)
+  secretKey: {
+    type: String,
+    default: ''
+  },
   xp: {
-    type: Number,
+    type:    Number,
     default: 0
   },
   streak: {
-    type: Number,
+    type:    Number,
     default: 0
   },
   tier: {
-    type: String,
-    enum: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Titan'],
+    type:    String,
+    enum:    ['Bronze', 'Silver', 'Gold', 'Platinum', 'Titan'],
     default: 'Bronze'
   },
   region: {
-    type: String,
+    type:    String,
     default: 'Global'
   },
   height: {
-    type: Number, // in cm
-    default: 0
+    type:    Number,
+    default: 175
   },
   weight: {
-    type: Number, // in kg
-    default: 0
+    type:    Number,
+    default: 70
   },
   gender: {
-    type: String,
-    enum: ['male', 'female', 'other'],
+    type:    String,
+    enum:    ['male', 'female', 'other'],
     default: 'other'
   },
   age: {
-    type: Number,
+    type:    Number,
     default: 25
   },
   activityLevel: {
-    type: String,
-    enum: ['sedentary', 'lightly_active', 'moderately_active', 'very_active'],
+    type:    String,
+    enum:    ['sedentary', 'lightly_active', 'moderately_active', 'very_active'],
     default: 'sedentary'
   },
   role: {
-    type: String,
-    enum: ['user', 'admin'],
+    type:    String,
+    enum:    ['user', 'admin'],
     default: 'user'
   }
 }, {

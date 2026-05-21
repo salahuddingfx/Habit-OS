@@ -89,13 +89,28 @@ export const useAuthStore = create((set, get) => ({
   },
 
   // ── Signup ───────────────────────────────────────────────────────────────
-  signup: async (username, password, region = 'Global', role = 'user') => {
+  signup: async (username, password, options = {}) => {
+    let region = 'Global';
+    let role = 'user';
+    let fullName = '';
+    let email = '';
+    let secretKey = '';
+    if (typeof options === 'string') {
+      region = options;
+    } else if (options) {
+      region = options.region || 'Global';
+      role = options.role || 'user';
+      fullName = options.fullName || '';
+      email = options.email || '';
+      secretKey = options.secretKey || '';
+    }
+
     set({ loading: true, error: null });
     try {
       const res  = await apiFetch(`${API_URL}/auth/signup`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ username, password, region, role }),
+        body:    JSON.stringify({ username, password, fullName, email, secretKey, region, role }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Registration failed');

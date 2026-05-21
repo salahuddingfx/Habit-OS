@@ -34,6 +34,8 @@ export default function Profile() {
 
   const [form, setForm] = useState({
     username:      user?.username      || '',
+    fullName:      user?.fullName      || '',
+    email:         user?.email         || '',
     height:        user?.height        || 175,
     weight:        user?.weight        || 70,
     age:           user?.age           || 25,
@@ -41,6 +43,22 @@ export default function Profile() {
     activityLevel: user?.activityLevel || 'sedentary',
     region:        user?.region        || 'Global'
   });
+
+  useEffect(() => {
+    if (user) {
+      setForm({
+        username:      user.username      || '',
+        fullName:      user.fullName      || '',
+        email:         user.email         || '',
+        height:        user.height        || 175,
+        weight:        user.weight        || 70,
+        age:           user.age           || 25,
+        gender:        user.gender        || 'other',
+        activityLevel: user.activityLevel || 'sedentary',
+        region:        user.region        || 'Global'
+      });
+    }
+  }, [user]);
 
   const tier = user?.tier || 'Bronze';
   const tierStyle = TIER_COLORS[tier] || TIER_COLORS.Bronze;
@@ -58,6 +76,8 @@ export default function Profile() {
   const handleSave = async () => {
     await updateProfile({
       username:      form.username,
+      fullName:      form.fullName,
+      email:         form.email,
       height:        Number(form.height),
       weight:        Number(form.weight),
       age:           Number(form.age),
@@ -99,8 +119,9 @@ export default function Profile() {
 
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-extrabold text-text-white font-outfit truncate">
-              {user?.username || 'My Profile'}
+              {user?.fullName || user?.username || 'My Profile'}
             </h1>
+            <p className="text-xs text-text-muted">@{user?.username}</p>
             <div className="flex items-center space-x-2 mt-1 flex-wrap gap-y-1">
               {/* Tier badge */}
               <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${tierStyle.bg} ${tierStyle.color} ${tierStyle.border}`}>
@@ -181,15 +202,28 @@ export default function Profile() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Your Name">
+          <Field label="Full Name">
             {editing ? (
               <input
-                value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 className="w-full bg-background-dark border border-border-slate rounded-xl px-3 py-2.5 text-sm text-text-white focus:outline-none focus:border-accent-purple transition-all"
               />
             ) : (
-              <div className="text-sm text-text-white py-2.5">{user?.username || '—'}</div>
+              <div className="text-sm text-text-white py-2.5">{user?.fullName || '—'}</div>
+            )}
+          </Field>
+
+          <Field label="Email Address">
+            {editing ? (
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="w-full bg-background-dark border border-border-slate rounded-xl px-3 py-2.5 text-sm text-text-white focus:outline-none focus:border-accent-purple transition-all"
+              />
+            ) : (
+              <div className="text-sm text-text-white py-2.5">{user?.email || '—'}</div>
             )}
           </Field>
 
@@ -201,6 +235,7 @@ export default function Profile() {
                 className="w-full bg-background-dark border border-border-slate rounded-xl px-3 py-2.5 text-sm text-text-white focus:outline-none focus:border-accent-purple transition-all"
               >
                 <option value="Global">Global</option>
+                <option value="Bangladesh">Bangladesh</option>
                 <option value="North America">North America</option>
                 <option value="Europe">Europe</option>
                 <option value="Asia">Asia</option>
@@ -293,7 +328,7 @@ export default function Profile() {
               <span>{loading ? 'Saving...' : 'Save Changes'}</span>
             </button>
             <button
-              onClick={() => { setEditing(false); setForm({ username: user?.username || '', height: user?.height || 175, weight: user?.weight || 70, age: user?.age || 25, gender: user?.gender || 'other', activityLevel: user?.activityLevel || 'sedentary', region: user?.region || 'Global' }); }}
+              onClick={() => { setEditing(false); setForm({ username: user?.username || '', fullName: user?.fullName || '', email: user?.email || '', height: user?.height || 175, weight: user?.weight || 70, age: user?.age || 25, gender: user?.gender || 'other', activityLevel: user?.activityLevel || 'sedentary', region: user?.region || 'Global' }); }}
               className="px-5 py-3 bg-border-slate/30 hover:bg-border-slate/60 text-text-muted hover:text-text-white text-sm font-bold rounded-xl transition-all"
             >
               Cancel
