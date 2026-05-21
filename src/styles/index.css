@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Light Mode (default)
+   Override with .dark-theme on <body>
+══════════════════════════════════════════════════════════════════════════ */
+@theme {
+  --color-background-dark: #F1F5F9;
+  --color-surface-dark:    #FFFFFF;
+  --color-accent-purple:   #7C3AED;
+  --color-accent-hover:    #6D28D9;
+  --color-border-slate:    #CBD5E1;
+  --color-success-emerald: #10B981;
+  --color-error-red:       #EF4444;
+  --color-text-white:      #0F172A;
+  --color-text-muted:      #64748B;
+}
+
+@layer base {
+  html { height: 100%; }
+
+  body {
+    min-height: 100%;
+    background-color: var(--color-background-dark, #F1F5F9);
+    color:            var(--color-text-white, #0F172A);
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* ── Dark Mode Override ── */
+  body.dark-theme {
+    --color-background-dark: #070707;
+    --color-surface-dark:    #0A0A0A;
+    --color-accent-purple:   #7C3AED;
+    --color-accent-hover:    #8B5CF6;
+    --color-border-slate:    #27272A;
+    --color-success-emerald: #10B981;
+    --color-error-red:       #EF4444;
+    --color-text-white:      #FAFAFA;
+    --color-text-muted:      #A1A1AA;
+    background-color: #070707;
+    color: #FAFAFA;
+  }
+
+  #root { min-height: 100%; }
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar         { width: 5px; height: 5px; }
+::-webkit-scrollbar-track   { background: transparent; }
+::-webkit-scrollbar-thumb   { background: #CBD5E1; border-radius: 4px; }
+body.dark-theme ::-webkit-scrollbar-thumb { background: #27272A; }
+::-webkit-scrollbar-thumb:hover { background: #7C3AED; }
+
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ── Glassmorphism ──────────────────────────────────────────────────────── */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid #CBD5E1;
+}
+body.dark-theme .glass-panel {
+  background: rgba(10, 10, 10, 0.75);
+  border: 1px solid #27272A;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.hover-glowing-card { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+.hover-glowing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.18);
+  border-color: rgba(124, 58, 237, 0.35);
+}
+
+/* ── Heatmap ────────────────────────────────────────────────────────────── */
+.heatmap-cell { aspect-ratio: 1; border-radius: 2px; transition: transform 0.15s ease; }
+.heatmap-cell:hover { transform: scale(1.2); z-index: 10; }
+
+/* ── Skeleton pulse ─────────────────────────────────────────────────────── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.12; }
+  50%       { opacity: 0.30; }
+}
+.animate-skeleton { animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+/* ── Neon blobs ─────────────────────────────────────────────────────────── */
+.neon-glow-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(150px); opacity: 0.12;
+  pointer-events: none; z-index: 0;
+}
+
+/* ── Progress ring ──────────────────────────────────────────────────────── */
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.5s ease-in-out;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* ── Shimmer ────────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.shimmer-bg {
+  background: linear-gradient(90deg, rgba(203,213,225,0.1) 25%, rgba(124,58,237,0.12) 50%, rgba(203,213,225,0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+body.dark-theme .shimmer-bg {
+  background: linear-gradient(90deg, rgba(39,39,42,0.1) 25%, rgba(124,58,237,0.15) 50%, rgba(39,39,42,0.1) 75%);
+  background-size: 200% 100%;
+}
+
+/* ── Boot screen mono font ──────────────────────────────────────────────── */
+.bios-text { font-family: 'Courier New', Courier, monospace; }

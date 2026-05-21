@@ -1,0 +1,6 @@
+{
+  "appId": "com.healthhabit.os",
+  "appName": "Health & Habit OS",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
