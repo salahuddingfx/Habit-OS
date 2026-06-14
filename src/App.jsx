@@ -119,6 +119,42 @@ export default function App() {
     }
   }, [booting, user?.id, isGuest, isOffline]);
 
+  // Keyboard navigation shortcuts (Alt + 1-5)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const tag = e.target.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) {
+        return;
+      }
+
+      if (e.altKey && ['1', '2', '3', '4', '5'].includes(e.key)) {
+        e.preventDefault();
+        const shortcutMap = {
+          '1': 'dashboard',
+          '2': 'goals',
+          '3': 'plans',
+          '4': 'challenges',
+          '5': 'food'
+        };
+        const page = shortcutMap[e.key];
+        if (page) {
+          setActivePage(page);
+          const pageNames = {
+            'dashboard': t('home') || 'Home',
+            'goals': t('habits') || 'Habits',
+            'plans': t('plans') || 'Plans',
+            'challenges': t('challenges') || 'Challenges',
+            'food': t('food') || 'Food'
+          };
+          toast.info(`Switched to ${pageNames[page]}`, { duration: 1500 });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setActivePage, t]);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
