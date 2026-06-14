@@ -16,6 +16,7 @@ export const en = {
   profile:     'Profile',
   dev:         'Dev',
   admin:       'Admin',
+  more:        'More',
 
   // Common
   save:        'Save',
