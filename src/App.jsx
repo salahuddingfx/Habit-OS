@@ -38,7 +38,7 @@ import {
   Activity, Target, Clock, Trophy, BarChart2, LogOut,
   ChevronDown, ChevronUp, Settings, UserCircle, Code2,
   ClipboardList, Download, Swords, Smile, Scale, Apple, Globe,
-  Users, Bell, LayoutDashboard
+  Users, Bell, LayoutDashboard, Menu, X
 } from 'lucide-react';
 
 export default function App() {
@@ -50,12 +50,17 @@ export default function App() {
   const { lang, switchLang, t } = useLang();
 
   const [booting, setBooting] = useState(true);
-  const [bootLogs, setBootLogs] = useState([]);
+  const [progress, setProgress] = useState(0);
   const [activePage, setActivePage] = useState('dashboard');
   const [theme, setTheme] = useState(() => {
     // read saved preference; default = light
     return localStorage.getItem('theme') || 'light';
   });
+
+  // Dropdown states for Top Navigation layout
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Apply theme class on mount and whenever theme changes
   useEffect(() => {
@@ -63,20 +68,36 @@ export default function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // BIOS boot sequence — exactly 2.0 s
+  // Modern boot sequence progress calculation over 2.0 seconds
   useEffect(() => {
-    const sequence = [
-      { text: 'Initializing Health Core...', delay: 100 },
-      { text: 'Loading Habit Engine...', delay: 500 },
-      { text: 'Connecting Local Database...', delay: 900 },
-      { text: 'Syncing AI Systems...', delay: 1300 },
-      { text: 'Realtime Services Online...', delay: 1700 }
-    ];
-    sequence.forEach(({ text, delay }) => {
-      setTimeout(() => setBootLogs((p) => [...p, text]), delay);
-    });
-    setTimeout(() => setBooting(false), 2000);
+    let start = null;
+    const duration = 2000;
+    let frameId;
+
+    const animate = (timestamp) => {
+      if (!start) start = timestamp;
+      const elapsed = timestamp - start;
+      const currentProgress = Math.min(Math.round((elapsed / duration) * 100), 100);
+      setProgress(currentProgress);
+
+      if (elapsed < duration) {
+        frameId = requestAnimationFrame(animate);
+      } else {
+        setBooting(false);
+      }
+    };
+
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
   }, []);
+
+  const getBootMessage = () => {
+    if (progress >= 85) return 'Realtime Services Online...';
+    if (progress >= 65) return 'Syncing AI Systems...';
+    if (progress >= 45) return 'Connecting Local Database...';
+    if (progress >= 25) return 'Loading Habit Engine...';
+    return 'Initializing Health Core...';
+  };
 
   // Init sync + Dexie after boot
   useEffect(() => {
@@ -133,25 +154,50 @@ export default function App() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  // ── BIOS Boot Screen ──────────────────────────────────────────────────
+  // ── Premium Glassmorphic Intro Loader ───────────────────────────────────
   if (booting) {
     return (
-      <div className="min-h-screen bg-background-dark flex flex-col items-center justify-center p-6 text-emerald-400 font-mono select-none">
-        <div className="w-full max-w-lg space-y-5">
-          <div className="flex items-center space-x-2 border-b border-border-slate/40 pb-3">
-            <Terminal className="h-5 w-5 animate-pulse text-accent-purple" />
-            <span className="text-xs font-bold uppercase tracking-wider text-text-white">Health &amp; Habit OS  BIOS v1.0.0</span>
+      <div className="min-h-screen bg-background-dark flex flex-col items-center justify-center p-6 relative overflow-hidden select-none">
+        {/* Ambient neon gradient blobs */}
+        <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-purple/15 rounded-full blur-[140px] pointer-events-none animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-success-emerald/10 rounded-full blur-[140px] pointer-events-none animate-pulse" />
+
+        <div className="w-full max-w-md bg-surface-dark/60 border border-border-slate/80 rounded-2xl p-8 shadow-2xl relative backdrop-blur-xl z-10 text-center space-y-6">
+          {/* Top subtle line */}
+          <div className="absolute top-0 left-10 right-10 h-[2px] bg-gradient-to-r from-transparent via-accent-purple to-transparent opacity-80" />
+
+          {/* Logo container */}
+          <div className="relative inline-flex items-center justify-center p-5 bg-accent-purple/10 border border-accent-purple/20 rounded-2xl text-accent-purple mb-1">
+            <Shield className="h-10 w-10 animate-pulse" />
+            <Sparkles className="absolute -top-1 -right-1 h-5 w-5 text-accent-purple animate-bounce" />
           </div>
-          <div className="space-y-2 min-h-36 text-xs bios-text leading-relaxed">
-            {bootLogs.map((log, idx) => (
-              <div key={idx} className="flex items-center space-x-2">
-                <span className="text-text-muted/40">[{idx}]</span>
-                <span>{log}</span>
-              </div>
-            ))}
+
+          <div className="space-y-1">
+            <h1 className="text-3xl font-extrabold tracking-tight font-outfit bg-clip-text text-transparent bg-gradient-to-r from-text-white via-text-white to-accent-purple">
+              Health &amp; Habit OS
+            </h1>
+            <p className="text-xs text-text-muted uppercase tracking-widest font-semibold">
+              Your Personal Wellness Dashboard
+            </p>
           </div>
-          <div className="w-full bg-border-slate/30 h-1 rounded-full overflow-hidden">
-            <div className="bg-accent-purple h-full animate-[progress_2s_linear] w-full origin-left"></div>
+
+          {/* Log Message */}
+          <div className="h-5 text-xs font-bold text-accent-purple tracking-wide">
+            {getBootMessage()}
+          </div>
+
+          {/* Progress Bar & percentage */}
+          <div className="space-y-2.5 pt-2">
+            <div className="flex justify-between text-[10px] font-extrabold text-text-muted uppercase tracking-wider px-1">
+              <span>Systems Initialization</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="w-full bg-border-slate/20 h-2 rounded-full overflow-hidden p-[1px]">
+              <div
+                className="bg-gradient-to-r from-accent-purple to-purple-500 h-full rounded-full transition-all duration-75 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -194,158 +240,354 @@ export default function App() {
     }
   };
 
-  const navItems = [
-    { id: 'dashboard',   label: t('home'),       icon: Activity        },
-    { id: 'goals',       label: t('habits'),     icon: Target          },
-    { id: 'plans',       label: t('plans'),      icon: ClipboardList   },
-    { id: 'challenges',  label: t('challenges'), icon: Swords          },
-    { id: 'social',      label: 'Social',        icon: Users           },
-    { id: 'mood',        label: t('mood'),       icon: Smile           },
-    { id: 'body',        label: t('body'),       icon: Scale           },
-    { id: 'food',        label: t('food'),       icon: Apple           },
-    { id: 'reminders',   label: 'Reminders',     icon: Bell            },
-    { id: 'timeline',    label: t('history'),    icon: Clock           },
-    { id: 'leaderboard', label: t('rankings'),   icon: Trophy          },
-    { id: 'analytics',   label: t('stats'),      icon: BarChart2       },
-    { id: 'export',      label: t('export'),     icon: Download        },
-    { id: 'ai',          label: t('ai'),         icon: Sparkles        },
-    { id: 'profile',     label: t('profile'),    icon: UserCircle      },
-    { id: 'developer',   label: t('dev'),        icon: Code2           },
-    ...(isAdmin ? [{ id: 'admin', label: t('admin'), icon: Settings }] : [])
-  ];
+  const primaryNavIds = ['dashboard', 'goals', 'plans', 'challenges', 'food'];
+  const primaryNavItems = navItems.filter(item => primaryNavIds.includes(item.id));
+  const secondaryNavItems = navItems.filter(item => !primaryNavIds.includes(item.id) && !['profile', 'developer', 'admin'].includes(item.id));
+  const profileNavItems = navItems.filter(item => ['profile', 'developer', 'admin'].includes(item.id));
 
   // ── Main Layout ───────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background-dark text-text-white transition-colors duration-300">
 
       {/* ══════════════════════════════════════════════════════════════════
-          TOP STATUS BAR — full width, sticky, both desktop + mobile
+          TOP STATUS & NAVIGATION BAR — sticky, unified layout
       ══════════════════════════════════════════════════════════════════ */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-12 bg-surface-dark/90 border-b border-border-slate/60 backdrop-blur-xl">
-        {/* Brand */}
-        <div className="flex items-center space-x-2">
-          <Shield className="h-4 w-4 text-accent-purple" />
-          <span className="font-extrabold text-sm tracking-tight font-outfit text-text-white">Health &amp; Habit OS</span>
-          {isAdmin && (
-            <span className="text-[9px] font-bold uppercase tracking-wider text-accent-purple bg-accent-purple/10 px-1.5 py-0.5 rounded border border-accent-purple/30">
-              Admin
-            </span>
-          )}
-        </div>
-
-        {/* Right Controls */}
-        <div className="flex items-center space-x-3">
-          {/* Online dot */}
-          <div className="flex items-center space-x-1">
-            <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-success-emerald' : 'bg-error-red animate-pulse'}`} />
-            <span className="text-[10px] text-text-muted hidden sm:block">{isOnline ? 'Online' : 'Offline'}</span>
-          </div>
-
-          {/* Pending sync */}
-          {pendingCount > 0 && (
-            <button onClick={syncOfflineData} className="text-accent-purple flex items-center space-x-1 text-[10px] font-bold">
-              <RefreshCw className="h-3 w-3 animate-spin" />
-              <span>{pendingCount} pending</span>
-            </button>
-          )}
-
-          {/* User badge */}
-          <div className="hidden sm:block text-right">
-            <div className="text-[10px] font-bold text-text-white">{user.username}</div>
-            <div className="flex items-center justify-end space-x-1 mt-0.5">
-              <div className="text-[9px] font-bold text-accent-purple uppercase">{user.tier || 'Bronze'}</div>
-              {isGuest && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Guest</span>}
-              {isOffline && !isGuest && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">Offline</span>}
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-16 bg-surface-dark/95 border-b border-border-slate/60 backdrop-blur-xl shadow-lg shadow-black/5">
+        {/* Left Side: Brand & Primary Tabs */}
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2 cursor-pointer select-none" onClick={() => { setActivePage('dashboard'); setMobileMenuOpen(false); }}>
+            <div className="p-1.5 bg-accent-purple/10 border border-accent-purple/20 rounded-lg text-accent-purple flex items-center justify-center">
+              <Shield className="h-5 w-5" />
             </div>
+            <span className="font-extrabold text-base tracking-tight font-outfit text-text-white">Health &amp; Habit OS</span>
           </div>
 
-          {/* Language toggle */}
-          <button
-            onClick={() => switchLang(lang === 'en' ? 'bn' : 'en')}
-            className="p-1.5 text-text-muted hover:text-accent-purple transition-colors rounded-lg hover:bg-accent-purple/10 text-[10px] font-extrabold tracking-tight flex items-center space-x-0.5"
-            title={lang === 'en' ? 'Switch to Bangla' : 'Switch to English'}
-          >
-            <Globe className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline ml-1">{lang === 'en' ? 'বাং' : 'EN'}</span>
-          </button>
-
-          {/* Theme toggle */}
-          <button onClick={toggleTheme} className="p-1.5 text-text-muted hover:text-text-white transition-colors rounded-lg hover:bg-border-slate/30">
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-
-          {/* Logout */}
-          <button onClick={logout} title="Log out" className="p-1.5 text-text-muted hover:text-error-red transition-colors rounded-lg hover:bg-error-red/10">
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </header>
-
-      {/* ══════════════════════════════════════════════════════════════════
-          BODY — sidebar on desktop, bottom nav on mobile
-      ══════════════════════════════════════════════════════════════════ */}
-      <div className="flex pt-12">
-
-        {/* ── LEFT SIDEBAR — visible only on lg+ ── */}
-        <aside className="hidden lg:flex flex-col fixed left-0 top-12 bottom-0 w-56 bg-surface-dark border-r border-border-slate/60 z-40 overflow-y-auto">
-          {/* User card */}
-          <div className="p-4 border-b border-border-slate/40">
-            <div className="flex items-center space-x-3">
-              <div className="h-9 w-9 rounded-xl bg-accent-purple/20 border border-accent-purple/30 flex items-center justify-center text-accent-purple font-black text-sm font-outfit">
-                {user.username?.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-text-white truncate">{user.username}</div>
-                <div className="text-[10px] text-accent-purple font-bold uppercase">{user.tier || 'Bronze'}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Nav items */}
-          <nav className="flex-1 p-3 space-y-0.5">
-            {navItems.map((item) => {
+          {/* Desktop Core Tabs */}
+          <nav className="hidden md:flex items-center space-x-1">
+            {primaryNavItems.map((item) => {
               const Icon = item.icon;
               const isSelected = activePage === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActivePage(item.id)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all group ${
+                  onClick={() => {
+                    setActivePage(item.id);
+                    setMoreMenuOpen(false);
+                    setProfileMenuOpen(false);
+                  }}
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
                     isSelected
-                      ? 'bg-accent-purple/15 text-accent-purple border border-accent-purple/25'
-                      : 'text-text-muted hover:text-text-white hover:bg-border-slate/30'
+                      ? 'bg-accent-purple/15 text-accent-purple border-accent-purple/20'
+                      : 'text-text-muted hover:text-text-white hover:bg-border-slate/20 border-transparent'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 transition-transform ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`} />
+                  <Icon className="h-3.5 w-3.5" />
                   <span>{item.label}</span>
-                  {isSelected && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent-purple" />}
                 </button>
               );
             })}
-          </nav>
 
-          {/* Sidebar badges strip */}
-          {unlockedKeys.size > 0 && (
-            <div className="px-3 pb-2">
-              <div className="text-[9px] font-bold uppercase tracking-widest text-text-muted mb-2">Badges ({unlockedKeys.size})</div>
-              <BadgeShelf unlockedKeys={unlockedKeys} compact />
+            {/* Desktop "More" Dropdown Trigger */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setMoreMenuOpen(!moreMenuOpen);
+                  setProfileMenuOpen(false);
+                }}
+                className={`flex items-center space-x-1 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  secondaryNavItems.some(i => i.id === activePage)
+                    ? 'bg-accent-purple/10 text-accent-purple border-accent-purple/20'
+                    : 'text-text-muted hover:text-text-white hover:bg-border-slate/20 border-transparent'
+                }`}
+              >
+                <span>{t('more')}</span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${moreMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Desktop "More" Dropdown Menu */}
+              {moreMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMoreMenuOpen(false)} />
+                  <div className="absolute left-0 mt-2 w-56 rounded-xl bg-surface-dark border border-border-slate/60 shadow-xl p-2 z-50 animate-[fade-in_0.15s_ease-out] text-left">
+                    {secondaryNavItems.map((item) => {
+                      const Icon = item.icon;
+                      const isSelected = activePage === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setActivePage(item.id);
+                            setMoreMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                            isSelected
+                              ? 'bg-accent-purple/15 text-accent-purple'
+                              : 'text-text-muted hover:text-text-white hover:bg-border-slate/20'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
+          </nav>
+        </div>
+
+        {/* Right Side Controls & Profile Dropdown */}
+        <div className="flex items-center space-x-2 md:space-x-3">
+          {/* Online status indicator */}
+          <div className="flex items-center space-x-1.5 bg-border-slate/10 border border-border-slate/20 rounded-full px-2.5 py-1 text-[10px] text-text-muted font-semibold">
+            <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-success-emerald animate-pulse' : 'bg-error-red'}`} />
+            <span className="hidden sm:block">{isOnline ? 'Online' : 'Offline'}</span>
+          </div>
+
+          {/* Sync indicator */}
+          {pendingCount > 0 && (
+            <button onClick={syncOfflineData} className="text-accent-purple flex items-center space-x-1 text-[10px] font-bold bg-accent-purple/10 border border-accent-purple/20 px-2 py-1 rounded-full animate-pulse">
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              <span>{pendingCount}</span>
+            </button>
           )}
 
-          {/* Sidebar footer */}
-          <div className="p-4 border-t border-border-slate/40 space-y-2">
-            <div className="text-[9px] text-text-muted/40 uppercase tracking-widest">Health &amp; Habit OS v1.0</div>
-            <div className="text-[9px] text-text-muted/30">by Salah Uddin Kader</div>
+          {/* Language Switcher */}
+          <button
+            onClick={() => switchLang(lang === 'en' ? 'bn' : 'en')}
+            className="p-2 text-text-muted hover:text-accent-purple transition-colors rounded-xl hover:bg-accent-purple/10 text-[10px] font-extrabold tracking-tight flex items-center space-x-0.5"
+            title={lang === 'en' ? 'Switch to Bangla' : 'Switch to English'}
+          >
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline ml-0.5">{lang === 'en' ? 'বাং' : 'EN'}</span>
+          </button>
+
+          {/* Theme Toggle */}
+          <button onClick={toggleTheme} className="p-2 text-text-muted hover:text-text-white transition-colors rounded-xl hover:bg-border-slate/20">
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
+          {/* User Profile Dropdown Trigger (Desktop) */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setProfileMenuOpen(!profileMenuOpen);
+                setMoreMenuOpen(false);
+              }}
+              className={`flex items-center space-x-2 px-2.5 py-1.5 rounded-xl border transition-all ${
+                profileMenuOpen || ['profile', 'developer', 'admin'].includes(activePage)
+                  ? 'bg-accent-purple/10 border-accent-purple/30 text-text-white'
+                  : 'border-border-slate/50 hover:bg-border-slate/20 hover:border-border-slate text-text-white'
+              }`}
+            >
+              <div className="h-6 w-6 rounded-lg bg-accent-purple/20 flex items-center justify-center text-accent-purple font-black text-xs font-outfit">
+                {user.username?.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-xs font-bold hidden sm:block truncate max-w-[80px]">{user.username}</span>
+              <ChevronDown className={`h-3 w-3 text-text-muted transition-transform duration-200 ${profileMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {profileMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
+                <div className="absolute right-0 mt-2 w-56 rounded-xl bg-surface-dark border border-border-slate/60 shadow-xl p-2 z-50 animate-[fade-in_0.15s_ease-out] text-left">
+                  {/* User Tier Details */}
+                  <div className="px-3 py-2 border-b border-border-slate/30 mb-1.5">
+                    <div className="text-xs font-bold text-text-white truncate">{user.username}</div>
+                    <div className="flex items-center space-x-1.5 mt-1">
+                      <span className="text-[9px] font-bold text-accent-purple uppercase tracking-wider bg-accent-purple/10 px-1.5 py-0.5 rounded border border-accent-purple/20">
+                        {user.tier || 'Bronze'}
+                      </span>
+                      {isGuest && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Guest</span>}
+                      {isOffline && !isGuest && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">Offline</span>}
+                    </div>
+                  </div>
+
+                  {profileNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isSelected = activePage === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActivePage(item.id);
+                          setProfileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                          isSelected
+                            ? 'bg-accent-purple/15 text-accent-purple'
+                            : 'text-text-muted hover:text-text-white hover:bg-border-slate/20'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+
+                  <div className="border-t border-border-slate/30 my-1.5" />
+
+                  <button
+                    onClick={() => {
+                      logout();
+                      setProfileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-semibold text-error-red hover:bg-error-red/10 transition-all"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        </aside>
+
+          {/* Hamburger Menu Toggle (Mobile) */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-text-muted hover:text-text-white transition-colors rounded-xl bg-border-slate/10 hover:bg-border-slate/20"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </header>
+
+      {/* ── MOBILE NAV DRAWER — overlay drawer ── */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 top-16 z-40 flex">
+          {/* Blur backdrop */}
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setMobileMenuOpen(false)} />
+
+          {/* Drawer content */}
+          <div className="relative w-80 max-w-[85vw] bg-surface-dark border-r border-border-slate/60 h-full flex flex-col z-50 p-5 shadow-2xl animate-[slide-in_0.2s_ease-out] overflow-y-auto pb-10 text-left">
+            {/* User card header */}
+            <div className="flex items-center space-x-3 pb-5 border-b border-border-slate/40 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-accent-purple/20 border border-accent-purple/30 flex items-center justify-center text-accent-purple font-black text-sm font-outfit">
+                {user.username?.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-extrabold text-text-white truncate">{user.username}</div>
+                <div className="flex items-center space-x-1.5 mt-0.5">
+                  <span className="text-[9px] font-bold text-accent-purple uppercase tracking-wider bg-accent-purple/10 px-1.5 py-0.5 rounded border border-accent-purple/20">
+                    {user.tier || 'Bronze'}
+                  </span>
+                  {isGuest && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400">Guest</span>}
+                  {isOffline && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400">Offline</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Menu groups */}
+            <div className="flex-1 space-y-6">
+              {/* Group 1: Core */}
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted/60 px-3">Core</div>
+                {primaryNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isSelected = activePage === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActivePage(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        isSelected
+                          ? 'bg-accent-purple/15 text-accent-purple border border-accent-purple/25'
+                          : 'text-text-muted hover:text-text-white hover:bg-border-slate/20'
+                      }`}
+                    >
+                      <Icon className="h-4.5 w-4.5 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Group 2: Features */}
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted/60 px-3">Features</div>
+                {secondaryNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isSelected = activePage === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActivePage(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        isSelected
+                          ? 'bg-accent-purple/15 text-accent-purple border border-accent-purple/25'
+                          : 'text-text-muted hover:text-text-white hover:bg-border-slate/20'
+                      }`}
+                    >
+                      <Icon className="h-4.5 w-4.5 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Group 3: Account */}
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted/60 px-3">Account</div>
+                {profileNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isSelected = activePage === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActivePage(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        isSelected
+                          ? 'bg-accent-purple/15 text-accent-purple border border-accent-purple/25'
+                          : 'text-text-muted hover:text-text-white hover:bg-border-slate/20'
+                      }`}
+                    >
+                      <Icon className="h-4.5 w-4.5 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Logout button at bottom of mobile drawer */}
+            <div className="mt-6 pt-4 border-t border-border-slate/40">
+              <button
+                onClick={() => {
+                  logout();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center space-x-2 py-3 bg-error-red/10 border border-error-red/30 hover:bg-error-red text-error-red hover:text-white font-bold text-sm rounded-xl transition-all"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BODY ── */}
+      <div className="pt-16 min-h-screen flex flex-col bg-background-dark">
 
         {/* ── MAIN CONTENT ── */}
-        <main className="flex-1 lg:ml-56 min-h-[calc(100vh-3rem)] px-4 py-6 md:px-8 md:py-8 pb-28 lg:pb-12">
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8 pb-16">
           {renderActivePage()}
 
           {/* ── FOOTER ── */}
           <footer className="mt-16 border-t border-border-slate/40 pt-10 pb-6 space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-left">
               {/* Brand */}
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
@@ -412,35 +654,6 @@ export default function App() {
           </footer>
         </main>
       </div>
-
-      {/* ══════════════════════════════════════════════════════════════════
-          BOTTOM NAV — mobile only (hidden on lg+), fixed
-      ══════════════════════════════════════════════════════════════════ */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface-dark/95 border-t border-border-slate/70 backdrop-blur-xl shadow-2xl shadow-black/60">
-        <div className="flex overflow-x-auto scrollbar-none">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isSelected = activePage === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActivePage(item.id)}
-                className={`flex-shrink-0 flex flex-col items-center justify-center py-2.5 px-3 min-w-[58px] space-y-0.5 transition-all relative ${
-                  isSelected ? 'text-accent-purple' : 'text-text-muted hover:text-text-white'
-                }`}
-              >
-                {isSelected && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] w-6 bg-accent-purple rounded-b-full" />
-                )}
-                <Icon className={`h-5 w-5 transition-transform ${isSelected ? 'scale-110' : ''}`} />
-                <span className="text-[9px] font-bold uppercase tracking-wide leading-none whitespace-nowrap">
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
 
       {/* ── Notification Banner ── */}
       {activeBanner && (
