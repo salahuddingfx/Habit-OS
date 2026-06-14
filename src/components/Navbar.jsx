@@ -23,6 +23,32 @@ export default function Navbar({
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
+  // Tier progress calculations
+  const currentXp = user.xp || 0;
+  let minXp = 0;
+  let maxXp = 100;
+  if (currentXp >= 1000) {
+    minXp = 1000;
+    maxXp = 1000;
+  } else if (currentXp >= 600) {
+    minXp = 600;
+    maxXp = 1000;
+  } else if (currentXp >= 300) {
+    minXp = 300;
+    maxXp = 600;
+  } else if (currentXp >= 100) {
+    minXp = 100;
+    maxXp = 300;
+  }
+
+  const range = maxXp - minXp;
+  const pct = range > 0 ? Math.min(((currentXp - minXp) / range) * 100, 100) : 100;
+
+  // SVG parameters for avatar progress ring
+  const radius = 14;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (pct / 100) * circumference;
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface-dark/95 border-b border-border-slate/60 backdrop-blur-xl shadow-lg shadow-black/5 h-16">
       <div className="w-full h-full max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between">
@@ -48,14 +74,17 @@ export default function Navbar({
                     setMoreMenuOpen(false);
                     setProfileMenuOpen(false);
                   }}
-                  className={`flex items-center justify-center space-x-1.5 px-3 h-10 rounded-xl text-xs font-bold transition-all border cursor-pointer min-w-[95px] ${
+                  className={`relative flex items-center justify-center space-x-1.5 px-3 h-10 rounded-xl text-xs font-bold transition-all border cursor-pointer min-w-[95px] ${
                     isSelected
-                      ? 'bg-accent-purple/15 text-accent-purple border-accent-purple/20'
+                      ? 'bg-accent-purple/10 text-accent-purple border-accent-purple/10'
                       : 'text-text-muted hover:text-text-white hover:bg-border-slate/20 border-transparent'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
                   <span>{item.label}</span>
+                  {isSelected && (
+                    <span className="absolute bottom-[-1px] left-4 right-4 h-[2px] bg-accent-purple rounded-t-full shadow-[0_-2px_8px_rgba(124,58,237,0.8)]" />
+                  )}
                 </button>
               );
             })}
@@ -67,7 +96,7 @@ export default function Navbar({
                   setMoreMenuOpen(!moreMenuOpen);
                   setProfileMenuOpen(false);
                 }}
-                className={`flex items-center justify-center space-x-1 px-3 h-10 rounded-xl text-xs font-bold transition-all border cursor-pointer min-w-[85px] ${
+                className={`relative flex items-center justify-center space-x-1 px-3 h-10 rounded-xl text-xs font-bold transition-all border cursor-pointer min-w-[85px] ${
                   secondaryNavItems.some(i => i.id === activePage)
                     ? 'bg-accent-purple/10 text-accent-purple border-accent-purple/20'
                     : 'text-text-muted hover:text-text-white hover:bg-border-slate/20 border-transparent'
@@ -75,6 +104,9 @@ export default function Navbar({
               >
                 <span>{t('more')}</span>
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 shrink-0 ${moreMenuOpen ? 'rotate-180' : ''}`} />
+                {secondaryNavItems.some(i => i.id === activePage) && (
+                  <span className="absolute bottom-[-1px] left-4 right-4 h-[2px] bg-accent-purple rounded-t-full shadow-[0_-2px_8px_rgba(124,58,237,0.8)]" />
+                )}
               </button>
 
               {/* Desktop "More" Dropdown Menu */}
@@ -138,7 +170,7 @@ export default function Navbar({
 
           {/* Theme Toggle */}
           <button onClick={toggleTheme} className="h-10 w-10 flex items-center justify-center text-text-muted hover:text-text-white transition-colors rounded-xl hover:bg-border-slate/20 cursor-pointer shrink-0">
-            {theme === 'dark' ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
           {/* User Profile Dropdown Trigger (Desktop) */}
@@ -148,14 +180,40 @@ export default function Navbar({
                 setProfileMenuOpen(!profileMenuOpen);
                 setMoreMenuOpen(false);
               }}
-              className={`flex items-center space-x-2 px-2.5 h-10 rounded-xl border transition-all cursor-pointer shrink-0 ${
+              className={`flex items-center space-x-2 px-2 h-10 rounded-xl border transition-all cursor-pointer shrink-0 ${
                 profileMenuOpen || ['profile', 'developer', 'admin'].includes(activePage)
                   ? 'bg-accent-purple/10 border-accent-purple/30 text-text-white shadow-inner'
                   : 'border-border-slate/50 hover:bg-border-slate/20 hover:border-border-slate text-text-white'
               }`}
+              title={`Tier: ${user.tier || 'Bronze'} (${currentXp} XP)`}
             >
-              <div className="h-6 w-6 rounded-lg bg-accent-purple/20 flex items-center justify-center text-accent-purple font-black text-xs font-outfit shrink-0">
-                {user.username?.charAt(0).toUpperCase()}
+              <div className="relative h-8 w-8 flex items-center justify-center shrink-0">
+                <svg className="absolute inset-0 h-full w-full -rotate-90">
+                  <circle
+                    cx="16"
+                    cy="16"
+                    r={radius}
+                    stroke="currentColor"
+                    className="text-border-slate/20 dark:text-border-slate/40"
+                    strokeWidth="2"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="16"
+                    cy="16"
+                    r={radius}
+                    stroke="currentColor"
+                    className="text-accent-purple transition-all duration-500 ease-out"
+                    strokeWidth="2.5"
+                    fill="transparent"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="h-6 w-6 rounded-full bg-accent-purple/20 flex items-center justify-center text-accent-purple font-black text-[11px] font-outfit z-10 shrink-0">
+                  {user.username?.charAt(0).toUpperCase()}
+                </div>
               </div>
               <span className="text-xs font-bold hidden sm:block truncate max-w-[80px]">{user.username}</span>
               <ChevronDown className={`h-3 w-3 text-text-muted transition-transform duration-200 shrink-0 ${profileMenuOpen ? 'rotate-180' : ''}`} />
