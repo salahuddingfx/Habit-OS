@@ -16,6 +16,7 @@ export const bn = {
   profile:     'প্রোফাইল',
   dev:         'ডেভ',
   admin:       'অ্যাডমিন',
+  more:        'আরও',
 
   // Common
   save:        'সংরক্ষণ',
